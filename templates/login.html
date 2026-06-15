@@ -89,6 +89,17 @@
       transition: background 0.2s;
     }
     .btn-login:hover { background: #6b0000; }
+    .setup-hint {
+      margin-top: 20px;
+      padding: 10px 14px;
+      background: #f7f4f0;
+      border-left: 3px solid #8b0000;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      color: #666;
+      line-height: 1.6;
+    }
+    .setup-hint strong { color: #333; }
   </style>
 </head>
 <body>
@@ -108,6 +119,9 @@
         <input type="password" id="password" name="password" autocomplete="current-password" required/>
         <button type="submit" class="btn-login">Sign In</button>
       </form>
+      <div class="setup-hint">
+        <strong>First time?</strong> Log in as <strong>superadmin</strong> to create your company and user accounts.
+      </div>
     </div>
   </div>
 </body>
