@@ -6,8 +6,19 @@ import bcrypt
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 
+def _build_dsn():
+    url = DATABASE_URL
+    # Railway sometimes provides postgres:// — psycopg2 requires postgresql://
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+    # Ensure SSL is enabled for Railway-hosted PostgreSQL
+    if url and "sslmode" not in url:
+        url += ("&" if "?" in url else "?") + "sslmode=require"
+    return url
+
+
 def get_db():
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    conn = psycopg2.connect(_build_dsn(), cursor_factory=psycopg2.extras.RealDictCursor)
     return conn
 
 
