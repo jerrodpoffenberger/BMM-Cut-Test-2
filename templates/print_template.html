@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ app_name }} — Cut Test Sheet</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #fff;
+      color: #111;
+      padding: 24px 32px;
+      font-size: 11pt;
+    }
+
+    /* ── Header ── */
+    .sheet-header {
+      border-bottom: 3px solid #8b0000;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .sheet-title {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #1c1a18;
+      letter-spacing: 1px;
+    }
+    .sheet-subtitle {
+      font-size: 9pt;
+      color: #666;
+      margin-top: 2px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .sheet-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+    }
+    .meta-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 10pt;
+    }
+    .meta-label {
+      font-weight: 600;
+      color: #555;
+      font-size: 9pt;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+    }
+    .write-line {
+      display: inline-block;
+      border-bottom: 1.5px solid #333;
+      min-width: 160px;
+      height: 18px;
+    }
+    .write-line-sm {
+      display: inline-block;
+      border-bottom: 1.5px solid #333;
+      min-width: 100px;
+      height: 18px;
+    }
+
+    /* ── Table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+    }
+    thead tr {
+      background: #1c1a18;
+      color: #f0ebe0;
+    }
+    th {
+      padding: 8px 10px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    th.center { text-align: center; }
+
+    tbody tr {
+      border-bottom: 1px solid #ddd;
+    }
+    tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+    td {
+      padding: 0 10px;
+      height: 38px;
+      font-size: 10.5pt;
+      vertical-align: middle;
+    }
+    td.cut-name { font-weight: 600; color: #1c1a18; }
+    td.cat-cell { font-size: 9pt; color: #666; }
+    td.input-cell {
+      text-align: center;
+      vertical-align: bottom;
+      padding-bottom: 4px;
+    }
+    .input-line {
+      display: block;
+      border-bottom: 1.5px solid #555;
+      width: 80%;
+      margin: 0 auto;
+      height: 22px;
+    }
+
+    /* Totals row */
+    .totals-row td {
+      font-weight: 700;
+      background: #f0ebe0;
+      border-top: 2px solid #8b0000;
+      color: #1c1a18;
+      font-size: 9.5pt;
+    }
+
+    /* ── Formula reminder ── */
+    .formula-box {
+      border: 1px solid #ccc;
+      border-left: 4px solid #8b0000;
+      border-radius: 4px;
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .formula {
+      font-size: 9pt;
+      color: #444;
+    }
+    .formula strong { color: #1c1a18; }
+
+    /* ── Notes area ── */
+    .notes-section {
+      margin-top: 10px;
+    }
+    .notes-label {
+      font-size: 9pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .notes-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .notes-lines div {
+      border-bottom: 1px solid #bbb;
+      height: 18px;
+    }
+
+    /* ── Footer ── */
+    .sheet-footer {
+      margin-top: 18px;
+      border-top: 1px solid #ddd;
+      padding-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 8pt;
+      color: #999;
+    }
+
+    /* ── Print button (screen only) ── */
+    .print-bar {
+      background: #1c1a18;
+      color: #f0ebe0;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: -24px -32px 24px;
+      gap: 12px;
+    }
+    .print-bar span { font-size: 0.85rem; color: #a09070; letter-spacing: 1px; text-transform: uppercase; }
+    .btn-print {
+      background: #8b0000;
+      color: white;
+      border: none;
+      padding: 8px 22px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-print:hover { background: #6b0000; }
+    .btn-back {
+      background: transparent;
+      color: #a09070;
+      border: 1px solid #444;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-back:hover { color: #f0ebe0; border-color: #888; }
+
+    /* ── Print media ── */
+    @media print {
+      .print-bar { display: none !important; }
+      body { padding: 16px 20px; }
+      @page { size: letter portrait; margin: 0.6in 0.5in; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-bar">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span>🥩 {{ app_name }}</span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <a href="/" class="btn-back">← Back</a>
+      <button class="btn-print" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+  </div>
+
+  <!-- Sheet header -->
+  <div class="sheet-header">
+    <div>
+      <div class="sheet-title">{{ app_name }}</div>
+      <div class="sheet-subtitle">Weekly Cut Test Sheet</div>
+    </div>
+    <div class="sheet-meta">
+      <div class="meta-row">
+        <span class="meta-label">Date:</span>
+        <span class="write-line"></span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Recorded By:</span>
+        <span class="write-line"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formula reference -->
+  <div class="formula-box">
+    <div class="formula"><strong>True Cost/lb</strong> = (Purchase $/lb ÷ Yield %) × 100</div>
+  </div>
+
+  <!-- Cut table -->
+  <table>
+    <thead>
+      <tr>
+        <th style="width:26%;">Cut</th>
+        <th style="width:13%;">Category</th>
+        <th class="center" style="width:13%;">Purchase $/lb</th>
+        <th class="center" style="width:13%;">Purchase Lbs</th>
+        <th class="center" style="width:16%;">Trim Lbs</th>
+        <th style="width:20%;">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cut in cuts %}
+      <tr>
+        <td class="cut-name">{{ cut.name }}</td>
+        <td class="cat-cell">{{ cut.category or '—' }}</td>
+        <td class="input-cell"><span class="input-line"></span></td>
+        <td class="input-cell"><span class="input-line"></span></td>
+        <td class="input-cell"><span class="input-line"></span></td>
+        <td></td>
+      </tr>
+      {% endfor %}
+      {% if cuts|length == 0 %}
+      <tr>
+        <td colspan="5" style="text-align:center;color:#aaa;padding:20px;">No active cuts. Add cuts in the app first.</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <!-- Notes -->
+  <div class="notes-section">
+    <div class="notes-label">Notes</div>
+    <div class="notes-lines">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="sheet-footer">
+    <span>{{ app_name }} — Cut Test Sheet</span>
+    <span>{{ cuts|length }} active cut(s) listed</span>
+  </div>
+
+</body>
+</html>

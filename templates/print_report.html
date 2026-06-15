@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ app_name }} — Cost Report</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #fff;
+      color: #111;
+      padding: 24px 32px;
+      font-size: 11pt;
+    }
+
+    /* ── Header ── */
+    .sheet-header {
+      border-bottom: 3px solid #8b0000;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .sheet-title {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #1c1a18;
+      letter-spacing: 1px;
+    }
+    .sheet-subtitle {
+      font-size: 9pt;
+      color: #666;
+      margin-top: 2px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .sheet-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+    }
+    .meta-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 10pt;
+    }
+    .meta-label {
+      font-weight: 600;
+      color: #555;
+      font-size: 9pt;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+    }
+    .meta-value {
+      font-weight: 700;
+      color: #1c1a18;
+      font-size: 10pt;
+    }
+
+    /* ── Date selector (screen only) ── */
+    .date-bar {
+      background: #f7f4f0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .date-bar label {
+      font-size: 0.82rem;
+      color: #555;
+      font-weight: 600;
+    }
+    .date-bar select {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.88rem;
+    }
+    .date-bar button {
+      background: #8b0000;
+      color: white;
+      border: none;
+      padding: 7px 18px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .date-bar button:hover { background: #6b0000; }
+
+    /* ── Table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+    }
+    thead tr {
+      background: #1c1a18;
+      color: #f0ebe0;
+    }
+    th {
+      padding: 9px 12px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    th.right { text-align: right; }
+
+    tbody tr {
+      border-bottom: 1px solid #ddd;
+    }
+    tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+    td {
+      padding: 9px 12px;
+      font-size: 10pt;
+      vertical-align: middle;
+    }
+    td.cut-name { font-weight: 600; color: #1c1a18; }
+    td.cat-cell { font-size: 9pt; color: #666; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.no-data { color: #bbb; text-align: right; font-style: italic; }
+
+    /* Yield color coding */
+    td.yield-good { color: #1e8449; font-weight: 700; text-align: right; }
+    td.yield-ok   { color: #d35400; font-weight: 700; text-align: right; }
+    td.yield-poor { color: #c0392b; font-weight: 700; text-align: right; }
+
+    td.true-cost { color: #8b0000; font-weight: 700; text-align: right; }
+
+    /* No-entry row */
+    tr.no-entry td { color: #ccc; font-style: italic; }
+
+    /* ── Formula box ── */
+    .formula-box {
+      border: 1px solid #ccc;
+      border-left: 4px solid #8b0000;
+      border-radius: 4px;
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .formula {
+      font-size: 9pt;
+      color: #444;
+    }
+    .formula strong { color: #1c1a18; }
+
+    /* ── Notes area ── */
+    .notes-section { margin-top: 10px; }
+    .notes-label {
+      font-size: 9pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .notes-lines { display: flex; flex-direction: column; gap: 14px; }
+    .notes-lines div { border-bottom: 1px solid #bbb; height: 18px; }
+
+    /* ── Footer ── */
+    .sheet-footer {
+      margin-top: 18px;
+      border-top: 1px solid #ddd;
+      padding-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 8pt;
+      color: #999;
+    }
+
+    /* ── Print bar (screen only) ── */
+    .print-bar {
+      background: #1c1a18;
+      color: #f0ebe0;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: -24px -32px 24px;
+      gap: 12px;
+    }
+    .print-bar span { font-size: 0.85rem; color: #a09070; letter-spacing: 1px; text-transform: uppercase; }
+    .btn-print {
+      background: #8b0000;
+      color: white;
+      border: none;
+      padding: 8px 22px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-print:hover { background: #6b0000; }
+    .btn-back {
+      background: transparent;
+      color: #a09070;
+      border: 1px solid #444;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-back:hover { color: #f0ebe0; border-color: #888; }
+
+    /* ── Print media ── */
+    @media print {
+      .print-bar { display: none !important; }
+      .date-bar  { display: none !important; }
+      body { padding: 16px 20px; }
+      @page { size: letter portrait; margin: 0.6in 0.5in; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-bar">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span>🥩 {{ app_name }}</span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <a href="/" class="btn-back">← Back</a>
+      <button class="btn-print" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+  </div>
+
+  <!-- Date selector (hidden on print) -->
+  {% if available_dates %}
+  <div class="date-bar">
+    <label for="date-select">Week ending:</label>
+    <select id="date-select">
+      {% for d in available_dates %}
+      <option value="{{ d }}" {% if d == entry_date %}selected{% endif %}>{{ d }}</option>
+      {% endfor %}
+    </select>
+    <button onclick="goToDate()">Load</button>
+  </div>
+  {% endif %}
+
+  <!-- Sheet header -->
+  <div class="sheet-header">
+    <div>
+      <div class="sheet-title">{{ app_name }}</div>
+      <div class="sheet-subtitle">Weekly Cost Report</div>
+    </div>
+    <div class="sheet-meta">
+      <div class="meta-row">
+        <span class="meta-label">Date:</span>
+        <span class="meta-value">{{ entry_date or '—' }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Cuts:</span>
+        <span class="meta-value">{{ cut_data | length }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formula reference -->
+  <div class="formula-box">
+    <div class="formula"><strong>Yield Loss %</strong> = Trim Lbs ÷ Purchase Lbs × 100</div>
+    <div class="formula"><strong>Yield %</strong> = 100 − Yield Loss %</div>
+    <div class="formula"><strong>True Cost/lb</strong> = (Purchase $/lb ÷ Yield %) × 100</div>
+  </div>
+
+  <!-- Data table -->
+  <table>
+    <thead>
+      <tr>
+        <th style="width:24%;">Cut</th>
+        <th style="width:12%;">Category</th>
+        <th class="right" style="width:13%;">Purchase $/lb</th>
+        <th class="right" style="width:11%;">Purchase Lbs</th>
+        <th class="right" style="width:10%;">Trim Lbs</th>
+        <th class="right" style="width:10%;">Yield Loss %</th>
+        <th class="right" style="width:10%;">Yield %</th>
+        <th class="right" style="width:10%;">True Cost/lb</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in cut_data %}
+      {% if c.entry %}
+      {% set e = c.entry %}
+      {% set yp = e.yield_pct %}
+      <tr>
+        <td class="cut-name">{{ c.name }}</td>
+        <td class="cat-cell">{{ c.category }}</td>
+        <td class="num">${{ "%.4f" | format(e.purchase_price) }}</td>
+        <td class="num">{{ "%.2f" | format(e.purchase_weight) }} lbs</td>
+        <td class="num">{{ "%.2f" | format(e.trim_weight) }} lbs</td>
+        <td class="num">{{ "%.1f" | format(e.yield_loss) }}%</td>
+        <td class="{{ 'yield-good' if yp >= 80 else ('yield-ok' if yp >= 70 else 'yield-poor') }}">
+          {{ "%.1f" | format(yp) }}%
+        </td>
+        <td class="true-cost">${{ "%.4f" | format(e.adjusted_cost) }}</td>
+      </tr>
+      {% else %}
+      <tr class="no-entry">
+        <td class="cut-name" style="color:#bbb;">{{ c.name }}</td>
+        <td class="cat-cell" style="color:#bbb;">{{ c.category }}</td>
+        <td class="no-data">—</td>
+        <td class="no-data">—</td>
+        <td class="no-data">—</td>
+        <td class="no-data">—</td>
+        <td class="no-data">—</td>
+        <td class="no-data">—</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+      {% if cut_data | length == 0 %}
+      <tr>
+        <td colspan="8" style="text-align:center;color:#aaa;padding:20px;">No active cuts found.</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <!-- Notes -->
+  <div class="notes-section">
+    <div class="notes-label">Notes</div>
+    <div class="notes-lines">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="sheet-footer">
+    <span>{{ app_name }} — Weekly Cost Report</span>
+    <span>{{ cut_data | length }} cut(s) &nbsp;|&nbsp; {{ entry_date or 'No date' }}</span>
+  </div>
+
+  <script>
+    function goToDate() {
+      const d = document.getElementById('date-select').value;
+      if (d) window.location.href = '/print-report?date=' + d;
+    }
+  </script>
+</body>
+</html>

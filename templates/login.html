@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Login — BMM Cut Test 2.0</title>
+  <meta name="theme-color" content="#1c1a18"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .login-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .login-banner {
+      background: #1c1a18;
+      border-radius: 14px 14px 0 0;
+      border-bottom: 3px solid #8b0000;
+      padding: 28px 44px 22px;
+      width: 380px;
+      text-align: center;
+    }
+    .login-banner h1 {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #a09070;
+      margin-top: 8px;
+    }
+    .login-banner .cut-icon {
+      font-size: 2.6rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .login-card {
+      background: white;
+      border-radius: 0 0 14px 14px;
+      padding: 32px 44px 40px;
+      width: 380px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    label {
+      display: block;
+      text-align: left;
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 4px;
+      margin-top: 16px;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+    input:focus { outline: none; border-color: #8b0000; }
+    .error-msg {
+      background: #fdecea;
+      color: #c0392b;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      margin-top: 16px;
+      text-align: left;
+    }
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: #8b0000;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: background 0.2s;
+    }
+    .btn-login:hover { background: #6b0000; }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-banner">
+      <span class="cut-icon">🥩</span>
+      <h1>BMM Cut Test 2.0</h1>
+    </div>
+    <div class="login-card">
+      {% if error %}
+        <div class="error-msg">{{ error }}</div>
+      {% endif %}
+      <form method="POST" action="/login">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" autocomplete="username" autofocus required/>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required/>
+        <button type="submit" class="btn-login">Sign In</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

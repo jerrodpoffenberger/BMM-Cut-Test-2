@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>{{ app_name }}</title>
+  <meta name="theme-color" content="#1c1a18"/>
+  <link rel="stylesheet" href="/static/css/style.css?v=1"/>
+</head>
+<body>
+
+<header id="main-header">
+  <div class="header-brand">
+    {% if user_role == 'admin' %}
+    <a href="/print-report" target="_blank" class="header-icon" title="Weekly Cost Report">🥩</a>
+    {% else %}
+    <span class="header-icon" style="cursor:default;">🥩</span>
+    {% endif %}
+    <h1>{{ app_name }}</h1>
+  </div>
+  <button class="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <nav>
+    {% if user_role == 'admin' %}
+    <button class="nav-btn active" onclick="showTab('dashboard')">Dashboard</button>
+    {% endif %}
+    <button class="nav-btn {% if user_role != 'admin' %}active{% endif %}" onclick="showTab('weekly')">Weekly Update</button>
+    {% if user_role == 'admin' %}
+    <button class="nav-btn" onclick="showTab('cuts')">Cuts</button>
+    <button class="nav-btn" onclick="showTab('reports')">Reports</button>
+    <button class="nav-btn" onclick="showTab('users')">Users</button>
+    <button class="nav-btn" onclick="showTab('settings')">Settings</button>
+    <button class="nav-btn" onclick="showTab('guide')">Guide</button>
+    <a href="/print-template" target="_blank" class="nav-btn" style="text-decoration:underline;">Cut Sheet</a>
+    {% endif %}
+    <a href="/change-password" class="nav-btn" style="font-size:0.65rem;">Password</a>
+    <a href="/logout" class="nav-btn nav-btn-logout">Log Out</a>
+    <span class="nav-user-badge">{{ username }}</span>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ── DASHBOARD ──────────────────────────────────────────────────────── -->
+  {% if user_role == 'admin' %}
+  <section id="tab-dashboard" class="tab active">
+    <div class="section-header">
+      <h2>Cost Overview</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="showTab('weekly')">+ Weekly Update</button>
+        <button class="btn btn-secondary btn-sm" id="send-alert-btn" onclick="sendAlert()">Send Alert Email</button>
+      </div>
+    </div>
+
+    <div id="dash-alert" class="alert-banner hidden"></div>
+
+    <div id="dash-cards" class="cards-grid"></div>
+    <p id="dash-empty" class="hidden" style="color:#aaa;font-size:0.9rem;padding:32px 0;text-align:center;">
+      No data yet. Add cuts in the <strong>Cuts</strong> tab, then enter prices in <strong>Weekly Update</strong>.
+    </p>
+  </section>
+  {% endif %}
+
+  <!-- ── WEEKLY UPDATE ──────────────────────────────────────────────────── -->
+  <section id="tab-weekly" class="tab {% if user_role != 'admin' %}active{% endif %}">
+    <div class="section-header">
+      <h2>Weekly Update</h2>
+      <button class="btn btn-primary" onclick="saveWeekly()">Save All</button>
+    </div>
+
+    <div id="weekly-alert" class="alert-banner hidden"></div>
+
+    <div class="filter-bar">
+      <label>Entry Date *
+        <input type="date" id="weekly-date" onchange="loadWeeklyEntries()"/>
+      </label>
+      <label>Recorded By
+        <input type="text" id="weekly-by" placeholder="Your name" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:0.9rem;"/>
+      </label>
+      <button class="btn btn-secondary" style="align-self:flex-end;" onclick="loadWeeklyEntries()">&#8635; Load</button>
+      {% if user_role == 'admin' %}
+      <button class="btn btn-danger btn-sm" style="align-self:flex-end;" onclick="openDeleteModal()">Delete Date</button>
+      {% endif %}
+    </div>
+
+    <div class="weekly-table-wrap">
+      <table class="weekly-table">
+        <thead>
+          <tr>
+            <th>Cut</th>
+            <th>Category</th>
+            <th>Purchase $/lb</th>
+            <th>Purchase Lbs</th>
+            <th>Trim Lbs</th>
+            <th>Yield Loss %</th>
+            <th>Yield %</th>
+            <th>True Cost/lb</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="weekly-body">
+          <tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">Loading cuts…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="saveWeekly()">Save All</button>
+    </div>
+  </section>
+
+  {% if user_role == 'admin' %}
+  <!-- ── CUTS ───────────────────────────────────────────────────────────── -->
+  <section id="tab-cuts" class="tab">
+    <div class="section-header">
+      <h2>Beef Cuts</h2>
+      <button class="btn btn-primary" onclick="openCutModal()">+ Add Cut</button>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="cuts-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── REPORTS ────────────────────────────────────────────────────────── -->
+  <section id="tab-reports" class="tab">
+    <div class="section-header">
+      <h2>Reports</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-blue" onclick="runReport()">Run Report</button>
+        <button class="btn btn-success" onclick="exportCSV()">Export CSV</button>
+      </div>
+    </div>
+
+    <div class="filter-bar" style="margin-bottom:22px;">
+      <label>Report Type
+        <select id="report-type">
+          <option value="purchase_cost">Purchase Cost ($/lb)</option>
+          <option value="yield_pct">Yield %</option>
+          <option value="true_cost">True Cost ($/lb)</option>
+        </select>
+      </label>
+      <label>From
+        <input type="date" id="report-from"/>
+      </label>
+      <label>To
+        <input type="date" id="report-to"/>
+      </label>
+      <label>Filter Cuts
+        <select id="report-cut-filter">
+          <option value="">All Cuts</option>
+        </select>
+      </label>
+      <button class="btn btn-blue" style="align-self:flex-end;" onclick="runReport()">Run Report</button>
+      <button class="btn btn-success" style="align-self:flex-end;" onclick="exportCSV()">Export CSV</button>
+    </div>
+
+    <div class="report-chart-box">
+      <div id="chart-empty" class="chart-empty">Select a date range and click Run Report.</div>
+      <canvas id="report-chart" style="display:none;"></canvas>
+    </div>
+
+    <div class="table-scroll">
+      <table id="report-table" style="display:none;">
+        <thead id="report-thead"></thead>
+        <tbody id="report-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── USERS ─────────────────────────────────────────────────────────── -->
+  <section id="tab-users" class="tab">
+    <div class="section-header">
+      <h2>Users</h2>
+      <button class="btn btn-primary" onclick="openUserModal(null)">+ Add User</button>
+    </div>
+    <div id="users-alert" class="alert-banner hidden"></div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Last Login</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-body">
+          <tr><td colspan="6" style="text-align:center;color:#aaa;padding:24px;">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── SETTINGS ───────────────────────────────────────────────────────── -->
+  <section id="tab-settings" class="tab">
+    <div class="section-header">
+      <h2>Settings</h2>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+
+    <div class="settings-card">
+      <h3>General</h3>
+      <p class="settings-hint">Configure the app name and how often prices should be updated.</p>
+      <label>App Name
+        <input type="text" id="s-app-name" placeholder="BMM Cut Test 2.0"/>
+      </label>
+      <label>Update Interval (days)
+        <input type="number" id="s-interval" min="1" max="365" value="7"/>
+      </label>
+      <div style="margin-top:6px;">
+        <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+        <span id="settings-result" style="margin-left:12px;font-size:0.85rem;color:#666;"></span>
+      </div>
+    </div>
+
+    <div class="settings-card" style="margin-top:18px;">
+      <h3>Email Alerts</h3>
+      <p class="settings-hint">Send an automatic email reminder when the weekly update is overdue.</p>
+      <label>Alert Email Address
+        <input type="email" id="s-alert-email" placeholder="manager@example.com"/>
+      </label>
+      <div style="margin-top:10px;">
+        <label style="flex-direction:row;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
+          <input type="checkbox" id="s-alert-enabled" style="width:auto;min-height:auto;"/>
+          Enable automatic overdue alerts (sent once per 24 hours)
+        </label>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+        <button class="btn btn-secondary" style="margin-left:8px;" onclick="manualSendAlert()">Send Test Alert Now</button>
+      </div>
+    </div>
+
+    <div class="settings-card" style="margin-top:18px;">
+      <h3>Account</h3>
+      <p class="settings-hint">
+        Change your password at any time using the
+        <a href="/change-password" style="color:#8b0000;">Change Password</a> page.
+        User accounts are managed in the <strong>Users</strong> tab.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── GUIDE ─────────────────────────────────────────────────────────────── -->
+  <section id="tab-guide" class="tab">
+    <div class="section-header">
+      <h2>Getting Started &amp; User Guide</h2>
+    </div>
+
+    <div class="settings-card">
+      <h3>What is BMM Cut Test 2.0?</h3>
+      <p class="settings-hint">
+        BMM Cut Test tracks the weekly purchase cost of beef cuts and calculates the true cost per pound
+        after trimming. Every cut loses weight during butchering — the yield adjustment gives you the
+        real cost of usable product, not just what you paid at the scale. Version 2.0 adds multi-tenant
+        support, user management, CSV export, and email alerts.
+      </p>
+    </div>
+
+    <div class="settings-card" style="margin-top:16px;">
+      <h3>Step 1 — Add Your Cuts</h3>
+      <p class="settings-hint">
+        Go to the <strong>Cuts</strong> tab and click <strong>+ Add Cut</strong>. Enter the cut name
+        (e.g. "Chuck Roll"), an optional category (e.g. "Chuck"), and an optional description.
+        Active cuts appear automatically on the Weekly Update form and the print sheet.
+        To remove a cut, click <strong>Delete</strong> and enter the password when prompted.
+      </p>
+    </div>
+
+    <div class="settings-card" style="margin-top:16px;">
+      <h3>Step 2 — Enter Weekly Prices</h3>
+      <p class="settings-hint">
+        Go to <strong>Weekly Update</strong>, pick the entry date (defaults to today), and fill in
+        three values for each cut:
+      </p>
+      <ul style="margin:10px 0 0 18px;font-size:0.88rem;color:#555;line-height:1.9;">
+        <li><strong>Purchase $/lb</strong> — price per pound you paid at purchase</li>
+        <li><strong>Purchase Lbs</strong> — total weight purchased (before trimming)</li>
+        <li><strong>Trim Lbs</strong> — weight of trim/waste removed during butchering</li>
+      </ul>
+      <p class="settings-hint" style="margin-top:8px;">
+        The app calculates Yield Loss %, Yield %, and True Cost live as you type.
+        Click <strong>Save All</strong> when done. Saving the same date again updates existing entries.
+        To delete a saved date's entries, click <strong>Delete Date</strong> and enter the password.
+      </p>
+    </div>
+
+    <div class="settings-card" style="margin-top:16px;">
+      <h3>How the Formulas Work</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-top:8px;">
+        <thead>
+          <tr style="background:#1c1a18;color:#f0ebe0;">
+            <th style="padding:8px 12px;text-align:left;">Metric</th>
+            <th style="padding:8px 12px;text-align:left;">Formula</th>
+            <th style="padding:8px 12px;text-align:left;">What it means</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:8px 12px;font-weight:600;">Yield Loss %</td>
+            <td style="padding:8px 12px;font-family:monospace;">Trim Lbs ÷ Purchase Lbs × 100</td>
+            <td style="padding:8px 12px;color:#555;">Percentage of purchased weight lost to trim</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;background:#fafafa;">
+            <td style="padding:8px 12px;font-weight:600;">Yield %</td>
+            <td style="padding:8px 12px;font-family:monospace;">100 − Yield Loss %</td>
+            <td style="padding:8px 12px;color:#555;">Percentage of purchased weight that is usable product</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;font-weight:600;color:#8b0000;">True Cost/lb</td>
+            <td style="padding:8px 12px;font-family:monospace;">(Purchase $/lb ÷ Yield %) × 100</td>
+            <td style="padding:8px 12px;color:#555;">Actual cost per usable pound after accounting for trim loss</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="settings-hint" style="margin-top:10px;">
+        <strong>Example:</strong> Chuck Roll at $3.50/lb, 100 lbs purchased, 18 lbs trim →
+        Yield Loss = 18%, Yield = 82%, True Cost = ($3.50 ÷ 82) × 100 = <strong>$4.27/lb</strong>.
+      </p>
+    </div>
+
+    <div class="settings-card" style="margin-top:16px;">
+      <h3>Users Tab</h3>
+      <p class="settings-hint">
+        Admins can create and manage users in the <strong>Users</strong> tab. Each user has a role:
+        <strong>Admin</strong> (full access) or <strong>Butcher</strong> (Weekly Update only).
+        Butchers log in with their own username and password. Any user can change their own password
+        via the <strong>Password</strong> link in the nav bar.
+      </p>
+    </div>
+
+    <div class="settings-card" style="margin-top:16px;">
+      <h3>Reports &amp; CSV Export</h3>
+      <p class="settings-hint">
+        The <strong>Reports</strong> tab lets you chart any metric over time. Use <strong>Export CSV</strong>
+        to download all entry data (filtered by date range) as a spreadsheet.
+      </p>
+    </div>
+
+    <div class="settings-card" style="margin-top:16px;border-left:4px solid #8b0000;">
+      <h3>Password-Protected Actions</h3>
+      <p class="settings-hint">
+        Two destructive actions require a password to confirm:
+      </p>
+      <ul style="margin:8px 0 0 18px;font-size:0.88rem;color:#555;line-height:1.9;">
+        <li><strong>Delete Date</strong> (Weekly Update) — soft-deletes all entries for a saved date</li>
+        <li><strong>Delete Cut</strong> (Cuts tab) — soft-deletes a cut and hides its historical entries</li>
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
+</main>
+
+<!-- ── DELETE ENTRIES MODAL ───────────────────────────────────────────────── -->
+<div id="delete-modal" class="modal hidden">
+  <h3 style="color:#c0392b;">Delete Saved Entries</h3>
+  <p style="font-size:0.88rem;color:#555;margin-bottom:18px;">
+    This will delete all saved data for the selected date. This cannot be undone.
+  </p>
+  <div id="delete-date-display" style="font-size:0.95rem;font-weight:600;color:#2c3e50;margin-bottom:18px;"></div>
+  <label style="display:flex;flex-direction:column;font-size:0.82rem;color:#666;gap:4px;margin-bottom:14px;">
+    Enter password to confirm
+    <input type="password" id="delete-password" placeholder="Password" autocomplete="off"
+           onkeydown="if(event.key==='Enter') confirmDelete()"/>
+  </label>
+  <div id="delete-error" class="hidden" style="background:#fdecea;color:#c0392b;border-radius:6px;padding:8px 12px;font-size:0.85rem;margin-bottom:12px;"></div>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeAll()">Cancel</button>
+    <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+  </div>
+</div>
+
+<!-- ── CUT MODAL ──────────────────────────────────────────────────────────── -->
+<div id="cut-modal" class="modal hidden">
+  <h3 id="cut-modal-title">Add Cut</h3>
+  <input type="hidden" id="cut-id"/>
+  <label>Name *
+    <input type="text" id="cut-name" placeholder="e.g. Chuck Roll"/>
+  </label>
+  <label>Category
+    <input type="text" id="cut-category" placeholder="e.g. Chuck, Rib, Loin"/>
+  </label>
+  <label>Description
+    <input type="text" id="cut-desc" placeholder="Optional notes"/>
+  </label>
+  <label>Target Yield %
+    <input type="number" id="cut-target-yield" step="0.1" min="0" max="100" placeholder="e.g. 82.0 (leave blank if none)"/>
+  </label>
+  <div id="cut-active-field" class="hidden">
+    <label style="flex-direction:row;align-items:center;gap:8px;cursor:pointer;">
+      <input type="checkbox" id="cut-active" style="width:auto;min-height:auto;"/>
+      Active (uncheck to deactivate)
+    </label>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeCutModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveCut()">Save</button>
+  </div>
+</div>
+
+<!-- ── CUT DELETE MODAL ────────────────────────────────────────────────────── -->
+<div id="cut-delete-modal" class="modal hidden">
+  <h3 style="color:#c0392b;">Delete Cut</h3>
+  <p style="font-size:0.88rem;color:#555;margin-bottom:10px;">
+    This will remove the cut and hide <strong>all its historical entries</strong>. This cannot be undone.
+  </p>
+  <div style="font-size:0.95rem;font-weight:600;color:#2c3e50;margin-bottom:18px;">
+    Cut: <span id="cut-delete-name"></span>
+  </div>
+  <input type="hidden" id="cut-delete-id"/>
+  <label style="display:flex;flex-direction:column;font-size:0.82rem;color:#666;gap:4px;margin-bottom:14px;">
+    Enter password to confirm
+    <input type="password" id="cut-delete-password" placeholder="Password" autocomplete="off"
+           onkeydown="if(event.key==='Enter') confirmCutDelete()"/>
+  </label>
+  <div id="cut-delete-error" class="hidden" style="background:#fdecea;color:#c0392b;border-radius:6px;padding:8px 12px;font-size:0.85rem;margin-bottom:12px;"></div>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeAll()">Cancel</button>
+    <button class="btn btn-danger" onclick="confirmCutDelete()">Delete</button>
+  </div>
+</div>
+
+<!-- ── USER MODAL ─────────────────────────────────────────────────────────── -->
+<div id="user-modal" class="modal hidden">
+  <h3 id="user-modal-title">Add User</h3>
+  <input type="hidden" id="user-id"/>
+  <div id="user-modal-error" class="hidden" style="background:#fdecea;color:#c0392b;border-radius:6px;padding:8px 12px;font-size:0.85rem;margin-bottom:12px;"></div>
+  <label>Username *
+    <input type="text" id="user-username" placeholder="Username"/>
+  </label>
+  <label>Email
+    <input type="email" id="user-email" placeholder="user@example.com"/>
+  </label>
+  <label>Role
+    <select id="user-role">
+      <option value="butcher">Butcher</option>
+      <option value="admin">Admin</option>
+    </select>
+  </label>
+  <div id="user-password-section">
+    <label>Password *
+      <input type="password" id="user-password" placeholder="Password"/>
+    </label>
+  </div>
+  <div id="user-newpassword-section" class="hidden">
+    <label>Reset Password <span style="font-size:0.75rem;color:#999;">(leave blank to keep current)</span>
+      <input type="password" id="user-new-password" placeholder="Leave blank to keep current"/>
+    </label>
+  </div>
+  <div id="user-active-section" class="hidden">
+    <label style="flex-direction:row;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
+      <input type="checkbox" id="user-active" style="width:auto;min-height:auto;"/>
+      Active
+    </label>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeAll()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveUser()">Save</button>
+  </div>
+</div>
+
+<div id="modal-overlay" class="modal-overlay hidden" onclick="closeAll()"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/static/js/app.js?v=1"></script>
+</body>
+</html>

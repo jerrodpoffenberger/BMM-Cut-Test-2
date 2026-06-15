@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Super Admin — BMM Cut Test 2.0</title>
+  <meta name="theme-color" content="#1c1a18"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
+
+    header {
+      background: #1c1a18;
+      color: #f0ebe0;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 64px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+      border-bottom: 3px solid #6b0070;
+    }
+    .header-brand { display: flex; align-items: center; gap: 14px; }
+    .header-brand span { font-size: 1.8rem; }
+    .header-brand h1 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #a09070;
+    }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .user-badge {
+      font-size: 0.78rem;
+      color: #b0a088;
+      letter-spacing: 0.5px;
+    }
+    .btn-logout {
+      background: transparent;
+      color: #c0392b;
+      border: 1px solid #444;
+      padding: 7px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .btn-logout:hover { background: #2e2a26; color: #e74c3c; }
+
+    main { padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
+
+    .panel-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .panel-grid { grid-template-columns: 1fr; }
+      main { padding: 16px; }
+    }
+
+    .panel {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+    .panel-header {
+      background: #2c3e50;
+      color: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-header h2 { font-size: 0.9rem; font-weight: 700; letter-spacing: 0.5px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead { background: #f8f9fa; }
+    th { padding: 10px 14px; font-size: 0.78rem; text-align: left; color: #666; font-weight: 700;
+         text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; }
+    td { padding: 10px 14px; font-size: 0.86rem; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8f9fa; cursor: pointer; }
+    tr.selected td { background: #fff3f3; }
+
+    .btn {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary   { background: #8b0000; color: white; }
+    .btn-danger    { background: #e74c3c; color: white; }
+    .btn-secondary { background: #ecf0f1; color: #555; }
+    .btn-success   { background: #27ae60; color: white; }
+    .btn-purple    { background: #6b0070; color: white; }
+    .btn-sm        { padding: 4px 10px; font-size: 0.75rem; }
+
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      display: inline-block;
+    }
+    .badge-superadmin { background: #e8d5ff; color: #6b0070; }
+    .badge-admin      { background: #fdecea; color: #8b0000; }
+    .badge-butcher    { background: #f2f3f4; color: #666; }
+    .badge-active     { background: #eafaf1; color: #1e8449; }
+    .badge-inactive   { background: #f2f3f4; color: #aaa; }
+
+    .empty-row { color: #aaa; text-align: center; padding: 24px; font-size: 0.88rem; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      display: none;
+    }
+    .modal-overlay.open { display: block; }
+    .modal {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 12px;
+      padding: 28px;
+      z-index: 200;
+      width: 460px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      display: none;
+    }
+    .modal.open { display: block; }
+    .modal h3 { margin-bottom: 18px; color: #2c3e50; font-size: 1.05rem; }
+    .modal label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.82rem;
+      color: #666;
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+    .modal input, .modal select {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      width: 100%;
+    }
+    .modal input:focus, .modal select:focus { outline: none; border-color: #8b0000; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+    .form-divider {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 14px 0;
+    }
+    .form-section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #999;
+      margin-bottom: 10px;
+    }
+
+    .alert-msg {
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      margin-bottom: 14px;
+      display: none;
+    }
+    .alert-msg.error   { background: #fdecea; color: #c0392b; display: block; }
+    .alert-msg.success { background: #eafaf1; color: #1e8449; display: block; }
+
+    .hint { font-size: 0.78rem; color: #999; margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <span>🥩</span>
+    <h1>BMM Cut Test 2.0 — Super Admin</h1>
+  </div>
+  <div class="header-right">
+    <span class="user-badge">{{ username }}</span>
+    <a href="/logout" class="btn-logout">Log Out</a>
+  </div>
+</header>
+
+<main>
+  <div id="page-alert" class="alert-msg"></div>
+
+  <div class="panel-grid">
+    <!-- Tenants Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Tenants</h2>
+        <button class="btn btn-purple btn-sm" onclick="openTenantModal()">+ New Tenant</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Slug</th>
+            <th>Status</th>
+            <th>Users</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tenant-body">
+          <tr><td colspan="5" class="empty-row">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Users Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2 id="users-panel-title">Users</h2>
+        <button class="btn btn-primary btn-sm" id="add-user-btn" onclick="openUserModal(null)" style="display:none;">+ Add User</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="user-body">
+          <tr><td colspan="5" class="empty-row">Click a tenant to view its users.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- Tenant Modal -->
+<div id="tenant-modal" class="modal">
+  <h3>Create New Tenant</h3>
+  <div id="tenant-modal-error" class="alert-msg"></div>
+  <div class="form-section-label">Tenant Info</div>
+  <label>Tenant Name *
+    <input type="text" id="t-name" placeholder="e.g. Rocky Mountain Meats"
+           oninput="autoSlug()"/>
+  </label>
+  <label>Slug * <span class="hint">URL-safe identifier, lowercase, no spaces</span>
+    <input type="text" id="t-slug" placeholder="e.g. rocky-mountain-meats"/>
+  </label>
+  <hr class="form-divider"/>
+  <div class="form-section-label">First Admin User</div>
+  <label>Admin Username *
+    <input type="text" id="t-admin-username" placeholder="e.g. admin"/>
+  </label>
+  <label>Admin Password *
+    <input type="password" id="t-admin-password" placeholder="Password"/>
+  </label>
+  <label>Admin Email
+    <input type="email" id="t-admin-email" placeholder="admin@example.com"/>
+  </label>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveTenant()">Create Tenant</button>
+  </div>
+</div>
+
+<!-- User Modal (Admin view of tenant users) -->
+<div id="user-modal" class="modal">
+  <h3 id="user-modal-title">Add User</h3>
+  <input type="hidden" id="u-id"/>
+  <div id="user-modal-error" class="alert-msg"></div>
+  <label>Username *
+    <input type="text" id="u-username" placeholder="Username"/>
+  </label>
+  <label>Email
+    <input type="email" id="u-email" placeholder="user@example.com"/>
+  </label>
+  <label>Role
+    <select id="u-role">
+      <option value="butcher">Butcher</option>
+      <option value="admin">Admin</option>
+    </select>
+  </label>
+  <label id="u-password-label">Password *
+    <input type="password" id="u-password" placeholder="Password"/>
+  </label>
+  <label id="u-new-password-label" style="display:none;">New Password <span class="hint">(leave blank to keep current)</span>
+    <input type="password" id="u-new-password" placeholder="Leave blank to keep current"/>
+  </label>
+  <div class="modal-actions">
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveUser()">Save</button>
+  </div>
+</div>
+
+<div id="modal-overlay" class="modal-overlay" onclick="closeModal()"></div>
+
+<script>
+'use strict';
+
+let currentTenantId = null;
+let currentTenantRow = null;
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function showPageAlert(type, msg) {
+  const el = document.getElementById('page-alert');
+  el.className = 'alert-msg ' + type;
+  el.textContent = msg;
+  if (type === 'success') setTimeout(() => { el.style.display = 'none'; el.className = 'alert-msg'; }, 3500);
+}
+
+function showModalError(id, msg) {
+  const el = document.getElementById(id);
+  el.className = 'alert-msg error';
+  el.textContent = msg;
+}
+
+function clearModalError(id) {
+  const el = document.getElementById(id);
+  el.className = 'alert-msg';
+  el.textContent = '';
+}
+
+async function apiFetch(url, opts = {}) {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts
+  });
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(d.error || 'Request failed (' + res.status + ')');
+  return d;
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() {
+  document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ── Tenants ───────────────────────────────────────────────────────────────────
+async function loadTenants() {
+  try {
+    const tenants = await apiFetch('/api/admin/tenants');
+    renderTenants(tenants);
+  } catch (e) {
+    document.getElementById('tenant-body').innerHTML =
+      `<tr><td colspan="5" class="empty-row" style="color:#c0392b;">Failed to load: ${esc(e.message)}</td></tr>`;
+  }
+}
+
+function renderTenants(tenants) {
+  const tbody = document.getElementById('tenant-body');
+  if (tenants.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-row">No tenants yet. Create one to get started.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = tenants.map(t => `
+    <tr data-tid="${t.id}" onclick="selectTenant(${t.id}, this)" class="${currentTenantId === t.id ? 'selected' : ''}">
+      <td style="font-weight:600;">${esc(t.name)}</td>
+      <td style="font-size:0.8rem;color:#888;">${esc(t.slug)}</td>
+      <td><span class="badge ${t.active ? 'badge-active' : 'badge-inactive'}">${t.active ? 'Active' : 'Inactive'}</span></td>
+      <td>${t.user_count}</td>
+      <td onclick="event.stopPropagation()">
+        ${t.active
+          ? `<button class="btn btn-danger btn-sm" onclick="deactivateTenant(${t.id})">Deactivate</button>`
+          : `<span style="font-size:0.78rem;color:#aaa;">Inactive</span>`
+        }
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openTenantModal() {
+  document.getElementById('t-name').value = '';
+  document.getElementById('t-slug').value = '';
+  document.getElementById('t-admin-username').value = '';
+  document.getElementById('t-admin-password').value = '';
+  document.getElementById('t-admin-email').value = '';
+  clearModalError('tenant-modal-error');
+  openModal('tenant-modal');
+  setTimeout(() => document.getElementById('t-name').focus(), 80);
+}
+
+function autoSlug() {
+  const name = document.getElementById('t-name').value;
+  document.getElementById('t-slug').value = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+async function saveTenant() {
+  clearModalError('tenant-modal-error');
+  const name = document.getElementById('t-name').value.trim();
+  const slug = document.getElementById('t-slug').value.trim();
+  const admin_username = document.getElementById('t-admin-username').value.trim();
+  const admin_password = document.getElementById('t-admin-password').value.trim();
+  const admin_email = document.getElementById('t-admin-email').value.trim();
+
+  if (!name || !slug) { showModalError('tenant-modal-error', 'Name and slug are required.'); return; }
+  if (!admin_username || !admin_password) { showModalError('tenant-modal-error', 'Admin username and password are required.'); return; }
+
+  try {
+    await apiFetch('/api/admin/tenants', {
+      method: 'POST',
+      body: JSON.stringify({ name, slug, admin_username, admin_password, admin_email })
+    });
+    closeModal();
+    showPageAlert('success', `Tenant "${name}" created.`);
+    loadTenants();
+  } catch (e) {
+    showModalError('tenant-modal-error', e.message);
+  }
+}
+
+async function deactivateTenant(tid) {
+  if (!confirm('Deactivate this tenant? Their users will no longer be able to log in.')) return;
+  try {
+    await apiFetch('/api/admin/tenants/' + tid, { method: 'DELETE' });
+    showPageAlert('success', 'Tenant deactivated.');
+    loadTenants();
+    if (currentTenantId === tid) {
+      currentTenantId = null;
+      document.getElementById('user-body').innerHTML = '<tr><td colspan="5" class="empty-row">Click a tenant to view its users.</td></tr>';
+      document.getElementById('users-panel-title').textContent = 'Users';
+      document.getElementById('add-user-btn').style.display = 'none';
+    }
+  } catch (e) {
+    showPageAlert('error', e.message);
+  }
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+async function selectTenant(tid, row) {
+  // Deselect previous
+  document.querySelectorAll('#tenant-body tr').forEach(r => r.classList.remove('selected'));
+  row.classList.add('selected');
+  currentTenantId = tid;
+
+  const tenantName = row.querySelector('td:first-child').textContent;
+  document.getElementById('users-panel-title').textContent = `Users — ${tenantName}`;
+  document.getElementById('add-user-btn').style.display = '';
+
+  await loadTenantUsers(tid);
+}
+
+async function loadTenantUsers(tid) {
+  document.getElementById('user-body').innerHTML = '<tr><td colspan="5" class="empty-row">Loading…</td></tr>';
+  try {
+    const users = await apiFetch('/api/admin/tenants/' + tid + '/users');
+    renderUsers(users);
+  } catch (e) {
+    document.getElementById('user-body').innerHTML =
+      `<tr><td colspan="5" class="empty-row" style="color:#c0392b;">${esc(e.message)}</td></tr>`;
+  }
+}
+
+function renderUsers(users) {
+  const tbody = document.getElementById('user-body');
+  if (users.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-row">No users yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => {
+    const lastLogin = u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never';
+    return `
+      <tr>
+        <td style="font-weight:600;">${esc(u.username)}</td>
+        <td style="font-size:0.8rem;color:#888;">${esc(u.email || '—')}</td>
+        <td><span class="badge badge-${u.role}">${u.role}</span></td>
+        <td><span class="badge ${u.active ? 'badge-active' : 'badge-inactive'}">${u.active ? 'Active' : 'Inactive'}</span></td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')})">Edit</button>
+          ${u.active
+            ? `<button class="btn btn-danger btn-sm" onclick="deactivateAdminUser(${u.id})">Deactivate</button>`
+            : ''
+          }
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openUserModal(user) {
+  document.getElementById('u-id').value = user ? user.id : '';
+  document.getElementById('u-username').value = user ? user.username : '';
+  document.getElementById('u-email').value = user ? (user.email || '') : '';
+  document.getElementById('u-role').value = user ? user.role : 'butcher';
+  document.getElementById('user-modal-title').textContent = user ? 'Edit User' : 'Add User';
+
+  const pwLabel = document.getElementById('u-password-label');
+  const newPwLabel = document.getElementById('u-new-password-label');
+  if (user) {
+    pwLabel.style.display = 'none';
+    newPwLabel.style.display = '';
+    document.getElementById('u-new-password').value = '';
+  } else {
+    pwLabel.style.display = '';
+    newPwLabel.style.display = 'none';
+    document.getElementById('u-password').value = '';
+  }
+
+  clearModalError('user-modal-error');
+  openModal('user-modal');
+  setTimeout(() => document.getElementById(user ? 'u-username' : 'u-username').focus(), 80);
+}
+
+async function saveUser() {
+  clearModalError('user-modal-error');
+  if (!currentTenantId) { showModalError('user-modal-error', 'No tenant selected.'); return; }
+
+  const uid = document.getElementById('u-id').value;
+  const username = document.getElementById('u-username').value.trim();
+  const email = document.getElementById('u-email').value.trim();
+  const role = document.getElementById('u-role').value;
+
+  if (!uid) {
+    // Create
+    const password = document.getElementById('u-password').value.trim();
+    if (!username || !password) { showModalError('user-modal-error', 'Username and password are required.'); return; }
+    try {
+      await apiFetch('/api/admin/tenants/' + currentTenantId + '/users', {
+        method: 'POST',
+        body: JSON.stringify({ username, email, password, role })
+      });
+      closeModal();
+      showPageAlert('success', `User "${username}" created.`);
+      loadTenantUsers(currentTenantId);
+    } catch (e) {
+      showModalError('user-modal-error', e.message);
+    }
+  } else {
+    // Update
+    const new_password = document.getElementById('u-new-password').value.trim();
+    const payload = { role, active: true, email };
+    if (new_password) payload.new_password = new_password;
+    try {
+      await apiFetch('/api/admin/users/' + uid, { method: 'PUT', body: JSON.stringify(payload) });
+      closeModal();
+      showPageAlert('success', 'User updated.');
+      loadTenantUsers(currentTenantId);
+    } catch (e) {
+      showModalError('user-modal-error', e.message);
+    }
+  }
+}
+
+async function deactivateAdminUser(uid) {
+  if (!confirm('Deactivate this user?')) return;
+  try {
+    await apiFetch('/api/admin/users/' + uid, { method: 'DELETE' });
+    showPageAlert('success', 'User deactivated.');
+    loadTenantUsers(currentTenantId);
+  } catch (e) {
+    showPageAlert('error', e.message);
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadTenants();
+});
+</script>
+</body>
+</html>
