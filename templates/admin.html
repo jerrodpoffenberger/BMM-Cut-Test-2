@@ -87,7 +87,8 @@
     td { padding: 10px 14px; font-size: 0.86rem; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #f8f9fa; cursor: pointer; }
-    tr.selected td { background: #fff3f3; }
+    tr.selected td { background: #fff3f3; border-left: 3px solid #8b0000; }
+    .click-hint { font-size: 0.72rem; color: #aaa; font-style: italic; margin-left: 6px; }
 
     .btn {
       padding: 6px 14px;
@@ -210,7 +211,7 @@
     <!-- Tenants Panel -->
     <div class="panel">
       <div class="panel-header">
-        <h2>Tenants</h2>
+        <h2>Tenants <span class="click-hint">click a row to manage users</span></h2>
         <button class="btn btn-purple btn-sm" onclick="openTenantModal()">+ New Tenant</button>
       </div>
       <table>
@@ -246,7 +247,7 @@
           </tr>
         </thead>
         <tbody id="user-body">
-          <tr><td colspan="5" class="empty-row">Click a tenant to view its users.</td></tr>
+          <tr><td colspan="5" class="empty-row">← Click a tenant row to view and manage its users.</td></tr>
         </tbody>
       </table>
     </div>
