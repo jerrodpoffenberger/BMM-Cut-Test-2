@@ -172,8 +172,6 @@ function renderDashboard(data) {
       <div class="card-row">Actual Yield: <strong>${actual != null ? fmtPct(actual) : '—'}</strong></div>
       ${target != null ? `<div class="card-row">Target Yield: <strong>${fmtPct(target)}</strong></div>` : ''}
       <div class="card-row">True Cost: <strong style="color:#8b0000;">${fmt$(c.adjusted_cost)}/lb</strong></div>
-      <div class="card-row">Avg Yield %: <strong>${fmtPct(c.avg_yield_pct)}</strong> <span style="font-size:0.75rem;color:#999;">all entries</span></div>
-      <div class="card-row">Avg True Cost: <strong style="color:#8b0000;">${fmt$(c.avg_true_cost)}/lb</strong> <span style="font-size:0.75rem;color:#999;">all entries</span></div>
       <span class="yield-badge">${badgeText}</span>
     </div>`;
   }).join('');
