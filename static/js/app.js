@@ -151,15 +151,16 @@ function renderDashboard(data) {
   cardsEl.innerHTML = cuts.map(c => {
     const target = c.target_yield != null ? c.target_yield : null;
     const actual = c.yield_pct > 0 ? c.yield_pct : null;
-    const diff = (target != null && actual != null) ? Math.abs(actual - target) : null;
-    const yieldClass = diff == null ? 'yield-none'
-                     : diff <= 3   ? 'yield-good'
-                     : diff <= 5   ? 'yield-ok'
-                     :               'yield-poor';
-    const badgeText  = diff == null ? 'No Target Set'
-                     : diff <= 3   ? `On Target (${fmtPct(actual)} vs ${fmtPct(target)})`
-                     : diff <= 5   ? `Near Target (${fmtPct(actual)} vs ${fmtPct(target)})`
-                     :               `Off Target (${fmtPct(actual)} vs ${fmtPct(target)})`;
+    // Directional: how far actual falls BELOW target (negative = above target)
+    const deficit = (target != null && actual != null) ? target - actual : null;
+    const yieldClass = deficit == null  ? 'yield-none'
+                     : deficit <= 0     ? 'yield-good'   // at or above target
+                     : deficit <= 3     ? 'yield-ok'     // up to 3% below
+                     :                   'yield-poor';   // 3%+ below
+    const badgeText = deficit == null  ? 'No Target Set'
+                    : deficit <= 0     ? `On Target ↑ ${fmtPct(Math.abs(deficit))} above`
+                    : deficit <= 3     ? `${fmtPct(deficit)} below target`
+                    :                   `${fmtPct(deficit)} below target`;
     return `
     <div class="card ${yieldClass}">
       <h3>${esc(c.cut_name)}</h3>
@@ -167,7 +168,8 @@ function renderDashboard(data) {
       <div class="card-row">Last Entry: <strong>${c.entry_date}</strong></div>
       <div class="card-row">Purchase Price: <strong>${fmt$(c.purchase_price)}/lb</strong></div>
       <div class="card-row">Purchase Weight: <strong>${fmtLbs(c.purchase_weight)}</strong></div>
-      <div class="card-row">Yield Loss: <strong>${fmtPct(c.yield_loss)}</strong></div>
+      <div class="card-row">Actual Yield: <strong>${actual != null ? fmtPct(actual) : '—'}</strong></div>
+      ${target != null ? `<div class="card-row">Target Yield: <strong>${fmtPct(target)}</strong></div>` : ''}
       <div class="card-row">True Cost: <strong style="color:#8b0000;">${fmt$(c.adjusted_cost)}/lb</strong></div>
       <div class="card-row">Avg Yield %: <strong>${fmtPct(c.avg_yield_pct)}</strong> <span style="font-size:0.75rem;color:#999;">all entries</span></div>
       <div class="card-row">Avg True Cost: <strong style="color:#8b0000;">${fmt$(c.avg_true_cost)}/lb</strong> <span style="font-size:0.75rem;color:#999;">all entries</span></div>
