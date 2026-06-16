@@ -133,8 +133,13 @@ main { padding: 28px 32px; }
 }
 .card.yield-good { border-left-color: #27ae60; }
 .card.yield-ok   { border-left-color: #e67e22; }
-.card.yield-poor { border-left-color: #e74c3c; }
+.card.yield-poor { border-left-color: #e74c3c; animation: flash-red 1s ease-in-out infinite; }
 .card.yield-none { border-left-color: #95a5a6; }
+
+@keyframes flash-red {
+  0%, 100% { border-left-color: #e74c3c; }
+  50%       { border-left-color: transparent; }
+}
 
 .card h3 { font-size: 1rem; margin-bottom: 4px; color: #2c3e50; }
 .card .cat-tag {
