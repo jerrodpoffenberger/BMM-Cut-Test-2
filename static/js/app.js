@@ -154,12 +154,13 @@ function renderDashboard(data) {
     // Directional: how far actual falls BELOW target (negative = above target)
     const deficit = (target != null && actual != null) ? target - actual : null;
     const yieldClass = deficit == null  ? 'yield-none'
-                     : deficit <= 0     ? 'yield-good'   // at or above target
-                     : deficit <= 3     ? 'yield-ok'     // up to 3% below
-                     :                   'yield-poor';   // 3%+ below
+                     : deficit <= 3     ? 'yield-good'   // at or above target, or up to 3% below
+                     : deficit <= 4     ? 'yield-ok'     // 3.1–4% below
+                     :                   'yield-poor';   // 4.1%+ below
     const badgeText = deficit == null  ? 'No Target Set'
                     : deficit <= 0     ? `On Target ↑ ${fmtPct(Math.abs(deficit))} above`
                     : deficit <= 3     ? `${fmtPct(deficit)} below target`
+                    : deficit <= 4     ? `${fmtPct(deficit)} below target`
                     :                   `${fmtPct(deficit)} below target`;
     return `
     <div class="card ${yieldClass}">
